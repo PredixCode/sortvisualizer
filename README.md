@@ -6,6 +6,8 @@ Welcome to **SortVisualizer**, an interactive application designed to bring sort
 
 Witness the elegance of algorithms like Bubble Sort, Insertion Sort, QuickSort, Merge Sort, and Tree Sort as they meticulously arrange data, with each comparison and swap animated and audibly represented for enhanced understanding.
 
+![SortVisualizer UI](./GUI.png) 
+
 ## Features
 
 * **Dynamic Visualization:** Watch stylized bars (with rounded corners and gradients) representing array elements rearrange in real-time according to the chosen algorithm's logic.
