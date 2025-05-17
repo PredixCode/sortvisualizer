@@ -1,10 +1,14 @@
 package com.predixcode.sortvisualizer.ui;
 
 import com.predixcode.sortvisualizer.algorithms.Algorithm;
+import com.predixcode.sortvisualizer.algorithms.BogoSort;
 import com.predixcode.sortvisualizer.algorithms.BubbleSort;
+import com.predixcode.sortvisualizer.algorithms.CocktailSort;
+import com.predixcode.sortvisualizer.algorithms.HeapSort;
 import com.predixcode.sortvisualizer.algorithms.InsertionSort;
 import com.predixcode.sortvisualizer.algorithms.MergeSort;
 import com.predixcode.sortvisualizer.algorithms.QuickSort;
+import com.predixcode.sortvisualizer.algorithms.ShellSort;
 import com.predixcode.sortvisualizer.algorithms.TreeSort;
 import com.predixcode.sortvisualizer.core.SortController;
 
@@ -49,6 +53,10 @@ public class ControlPanel extends VBox {
         AVAILABLE_ALGORITHMS.add(new QuickSort());
         AVAILABLE_ALGORITHMS.add(new MergeSort());
         AVAILABLE_ALGORITHMS.add(new TreeSort());
+        AVAILABLE_ALGORITHMS.add(new BogoSort());
+        AVAILABLE_ALGORITHMS.add(new CocktailSort());
+        AVAILABLE_ALGORITHMS.add(new HeapSort());
+        AVAILABLE_ALGORITHMS.add(new ShellSort());
     }
 
     public ControlPanel() {
@@ -147,7 +155,7 @@ public class ControlPanel extends VBox {
         arrayControlsContainer.setPadding(new Insets(10));
         arrayControlsContainer.setStyle("-fx-background-color: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR) + "; -fx-background-radius: 5;");
 
-        Label sizeLabel = new Label("Array Size (10-500):");
+        Label sizeLabel = new Label("Array Size (3-10000):");
         styleLabel(sizeLabel);
         arraySizeField = new TextField(String.valueOf(SortController.DEFAULT_ARRAY_SIZE));
         styleTextField(arraySizeField);
@@ -158,8 +166,8 @@ public class ControlPanel extends VBox {
             if (sortController != null) {
                 try {
                     int size = Integer.parseInt(arraySizeField.getText());
-                    if (size < 10) size = 10;
-                    if (size > 500) size = 500;
+                    if (size < 3) size = 3;
+                    if (size > 10000) size = 10000;
                     arraySizeField.setText(String.valueOf(size));
                     sortController.generateNewArray(size, SortController.DEFAULT_MIN_VALUE, SortController.DEFAULT_MAX_VALUE);
                     pauseResumeButton.setText("Pause");
@@ -445,6 +453,57 @@ public class ControlPanel extends VBox {
         minFrequencySlider.setDisable(false);
         maxFrequencySlider.setDisable(false);
         soundEnabledCheckbox.setDisable(false);
+    }
+    
+    /**
+     * Gets the session manager tab.
+     * This method was missing and is now added to fix the reference in App.java.
+     * @return The session manager tab.
+     */
+    public Tab getSessionManagerTab() {
+        // Create a new tab for session management
+        Tab sessionTab = new Tab("Session Manager");
+        sessionTab.setClosable(false);
+        
+        // Create content for the tab
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(15));
+        content.setStyle("-fx-background-color: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR) + ";");
+        
+        Label titleLabel = new Label("Session Management");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        titleLabel.setTextFill(Theme.TEXT_COLOR_LIGHT);
+        
+        // Add some placeholder content
+        Button saveSessionButton = createStyledButton("Save Current Session", Theme.PRIMARY_COLOR);
+        Button loadSessionButton = createStyledButton("Load Session", Theme.SECONDARY_COLOR);
+        
+        content.getChildren().addAll(titleLabel, saveSessionButton, loadSessionButton);
+        sessionTab.setContent(content);
+        
+        return sessionTab;
+    }
+    
+    /**
+     * Selects an algorithm in the combo box by its name.
+     * This method is called by SortController to set the algorithm by name.
+     * 
+     * @param name The name of the algorithm to select
+     */
+    public void selectAlgorithmByName(String name) {
+        if (name == null || name.isEmpty() || algorithmComboBox == null) {
+            return;
+        }
+        
+        for (AlgorithmItem item : algorithmComboBox.getItems()) {
+            if (item.getAlgorithm().getName().equals(name)) {
+                algorithmComboBox.getSelectionModel().select(item);
+                if (sortController != null) {
+                    sortController.setAlgorithm(item.getAlgorithm());
+                }
+                return;
+            }
+        }
     }
 
     private static class AlgorithmItem {

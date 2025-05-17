@@ -14,11 +14,13 @@ public class Theme {
     public static final Color PRIMARY_COLOR = Color.web("#4A90E2"); // A nice blue
     public static final Color SECONDARY_COLOR = Color.web("#50E3C2"); // A teal/mint color
     public static final Color ACCENT_COLOR = Color.web("#F5A623"); // An orange accent
+    public static final Color DANGER_COLOR = Color.web("#E7210A"); // An orange accent
 
     // --- Background Colors ---
     public static final Color BACKGROUND_COLOR = Color.web("#282c34"); // Dark background
     public static final String BACKGROUND_COLOR_HEX = "#282c34"; // Hex for CSS styling in code
     public static final Color PANEL_BACKGROUND_COLOR = Color.web("#3F444E"); // Slightly lighter for panels
+    public static final Color CARD_BACKGROUND_COLOR = Color.web("#3F444E"); // For card-like components
 
     // --- Text Colors ---
     public static final Color TEXT_COLOR_LIGHT = Color.web("#ABB2BF"); // Light grey for text on dark background

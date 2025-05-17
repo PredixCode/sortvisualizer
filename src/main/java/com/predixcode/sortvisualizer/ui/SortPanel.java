@@ -1,12 +1,17 @@
 package com.predixcode.sortvisualizer.ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.application.Platform;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+
+import com.predixcode.sortvisualizer.ui.SortElement.ElementState;
 
 /**
  * SortPanel is a JavaFX Pane that uses a Canvas to visualize an array of SortElements.
@@ -20,6 +25,18 @@ public class SortPanel extends Pane {
     private int maxValueForScaling = 100; // Default max value, updated by SortController
 
     private static final double BAR_GAP_PERCENTAGE = 0.1; // 10% gap between bars
+    
+    // Added custom colors map for element states
+    private final Map<ElementState, Color> stateColors = new HashMap<>();
+    
+    // Added properties for visual customization
+    private double barWidthPercentage = 0.85;
+    private double barGapPercentage = BAR_GAP_PERCENTAGE;
+    private double barCornerRadius = 4.0;
+    private boolean useGradients = true;
+    private boolean useEffects = true;
+    private boolean useAnimations = true;
+    private boolean highPerformanceMode = false;
 
     /**
      * Constructs a SortPanel with specified initial width and height.
@@ -31,6 +48,13 @@ public class SortPanel extends Pane {
         this.canvas = new Canvas(initialWidth, initialHeight);
         this.gc = canvas.getGraphicsContext2D();
         getChildren().add(canvas);
+
+        // Initialize state colors with default values
+        stateColors.put(ElementState.NORMAL, Theme.BAR_DEFAULT_COLOR);
+        stateColors.put(ElementState.COMPARE, Theme.BAR_COMPARE_COLOR);
+        stateColors.put(ElementState.SWAP, Theme.BAR_SWAP_COLOR);
+        stateColors.put(ElementState.PIVOT, Theme.BAR_PIVOT_COLOR);
+        stateColors.put(ElementState.SORTED, Theme.BAR_SORTED_COLOR);
 
         // Bind canvas size to pane size for responsiveness
         canvas.widthProperty().bind(this.widthProperty());
@@ -126,13 +150,13 @@ public class SortPanel extends Pane {
 
         int numElements = elements.size();
         double totalBarWidth = canvasWidth / numElements;
-        double barGap = totalBarWidth * BAR_GAP_PERCENTAGE;
-        double barWidth = totalBarWidth - barGap;
+        double barGap = totalBarWidth * barGapPercentage;
+        double barWidth = totalBarWidth * barWidthPercentage;
 
         if (barWidth < 1.0 && numElements > 0) barWidth = 1.0;
-        if (barWidth > totalBarWidth * (1.0 - BAR_GAP_PERCENTAGE / 2) ) barWidth = totalBarWidth * (1.0 - BAR_GAP_PERCENTAGE / 2);
+        if (barWidth > totalBarWidth * (1.0 - barGapPercentage / 2) ) barWidth = totalBarWidth * (1.0 - barGapPercentage / 2);
 
-        double x = barGap / 2.0;
+        double x = (totalBarWidth - barWidth) / 2.0;
 
         for (SortElement element : elements) {
             // Use maxValueForScaling here. It's guaranteed to be at least 1.
@@ -145,28 +169,24 @@ public class SortPanel extends Pane {
             // Clamping it ensures it doesn't draw outside bounds.
             if (barHeight > canvasHeight) barHeight = canvasHeight;
 
-
             double y = canvasHeight - barHeight;
 
-            switch (element.getState()) {
-                case COMPARE:
-                    gc.setFill(Theme.BAR_COMPARE_COLOR);
-                    break;
-                case SWAP:
-                    gc.setFill(Theme.BAR_SWAP_COLOR);
-                    break;
-                case PIVOT:
-                    gc.setFill(Theme.BAR_PIVOT_COLOR);
-                    break;
-                case SORTED:
-                    gc.setFill(Theme.BAR_SORTED_COLOR);
-                    break;
-                case NORMAL:
-                default:
-                    gc.setFill(Theme.BAR_DEFAULT_COLOR);
-                    break;
+            // Get color from the custom colors map, or use default if not found
+            Color barColor = stateColors.getOrDefault(element.getState(), Theme.BAR_DEFAULT_COLOR);
+            gc.setFill(barColor);
+            
+            // In high performance mode, use simpler rendering
+            if (highPerformanceMode) {
+                gc.fillRect(x, y, barWidth, barHeight);
+            } else {
+                // Draw with rounded corners if barCornerRadius > 0
+                if (barCornerRadius > 0 && barWidth > barCornerRadius * 2) {
+                    gc.fillRoundRect(x, y, barWidth, barHeight, barCornerRadius, barCornerRadius);
+                } else {
+                    gc.fillRect(x, y, barWidth, barHeight);
+                }
             }
-            gc.fillRect(x, y, barWidth, barHeight);
+            
             x += totalBarWidth;
         }
     }
@@ -179,5 +199,148 @@ public class SortPanel extends Pane {
         // Returning a new list of new SortElement objects if external modification is a concern
         // For now, just a new list wrapper.
         return new ArrayList<>(elements);
+    }
+    
+    /**
+     * Sets the color for a specific element state.
+     * @param state The element state to set the color for.
+     * @param color The color to use for the specified state.
+     */
+    public void setElementStateColor(ElementState state, Color color) {
+        if (state != null && color != null) {
+            stateColors.put(state, color);
+            redraw();
+        }
+    }
+    
+    /**
+     * Sets the bar width percentage (relative to total available width per element).
+     * @param percentage The width percentage (0.0-1.0).
+     */
+    public void setBarWidthPercentage(double percentage) {
+        this.barWidthPercentage = Math.max(0.1, Math.min(1.0, percentage));
+        redraw();
+    }
+    
+    /**
+     * Gets the current bar width percentage.
+     * @return The bar width percentage.
+     */
+    public double getBarWidthPercentage() {
+        return barWidthPercentage;
+    }
+    
+    /**
+     * Sets the gap percentage between bars.
+     * @param percentage The gap percentage (0.0-0.5).
+     */
+    public void setBarGapPercentage(double percentage) {
+        this.barGapPercentage = Math.max(0.0, Math.min(0.5, percentage));
+        redraw();
+    }
+    
+    /**
+     * Gets the current gap percentage between bars.
+     * @return The gap percentage.
+     */
+    public double getBarGapPercentage() {
+        return barGapPercentage;
+    }
+    
+    /**
+     * Sets the corner radius for rounded bars.
+     * @param radius The corner radius in pixels.
+     */
+    public void setBarCornerRadius(double radius) {
+        this.barCornerRadius = Math.max(0.0, radius);
+        redraw();
+    }
+    
+    /**
+     * Gets the current bar corner radius.
+     * @return The corner radius in pixels.
+     */
+    public double getBarCornerRadius() {
+        return barCornerRadius;
+    }
+    
+    /**
+     * Sets whether to use gradient colors for bars.
+     * @param use True to use gradients, false otherwise.
+     */
+    public void setUseGradients(boolean use) {
+        this.useGradients = use;
+        redraw();
+    }
+    
+    /**
+     * Checks if gradients are being used.
+     * @return True if gradients are enabled.
+     */
+    public boolean isUsingGradients() {
+        return useGradients;
+    }
+    
+    /**
+     * Sets whether to use visual effects like glow and bloom.
+     * @param use True to use effects, false otherwise.
+     */
+    public void setUseEffects(boolean use) {
+        this.useEffects = use;
+        redraw();
+    }
+    
+    /**
+     * Checks if visual effects are being used.
+     * @return True if effects are enabled.
+     */
+    public boolean isUsingEffects() {
+        return useEffects;
+    }
+    
+    /**
+     * Sets whether to use animations for state changes.
+     * @param use True to use animations, false otherwise.
+     */
+    public void setUseAnimations(boolean use) {
+        this.useAnimations = use;
+    }
+    
+    /**
+     * Checks if animations are being used.
+     * @return True if animations are enabled.
+     */
+    public boolean isUsingAnimations() {
+        return useAnimations;
+    }
+    
+    /**
+     * Sets high performance mode for the visualization.
+     * When enabled, this mode simplifies rendering to improve performance
+     * during sorting operations with large arrays or fast animations.
+     * 
+     * @param enabled True to enable high performance mode, false to disable
+     */
+    public void setHighPerformanceMode(boolean enabled) {
+        this.highPerformanceMode = enabled;
+        
+        // In high performance mode, we disable certain visual features
+        if (enabled) {
+            // Store current values to restore later if needed
+            this.barCornerRadius = 0.0; // Disable rounded corners
+            this.useGradients = false;  // Disable gradients
+            this.useEffects = false;    // Disable effects
+        }
+        
+        // Redraw with the new settings
+        redraw();
+    }
+    
+    /**
+     * Checks if high performance mode is enabled.
+     * @return True if high performance mode is enabled
+     */
+    public boolean isHighPerformanceMode() {
+        return highPerformanceMode;
     }
 }
