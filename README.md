@@ -38,14 +38,15 @@ Welcome to **SortVisualizer**, an interactive application designed to bring sort
 
 1.  **Clone the Repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/PredixCode/sortvisualizer/tree/main
     cd SortVisualizer
     ```
 
 2.  **Build and Run with Maven (Recommended):**
-    The project is configured to run easily using the JavaFX Maven plugin. Open a terminal in the project's root directory (where `pom.xml` is located) and execute:
+    The project is configured to run easily using the JavaFX Maven plugin.
+    Just execute the start.bat, which holds the command:
     ```bash
-    mvn clean javafx:run
+    mvn javafx:run
     ```
     This command will compile the project and launch the application.
 
@@ -90,19 +91,3 @@ The SortVisualizer currently features the following algorithms, each adapted for
 * **Quick Sort:** An efficient divide-and-conquer algorithm. It picks an element as a pivot and partitions the given array around the picked pivot. (Currently uses Lomuto partition scheme, adapted for iterative step-by-step visualization).
 * **Merge Sort:** Another efficient divide-and-conquer algorithm. It divides the unsorted list into n sublists, each containing one element (a list of one element is considered sorted), and then repeatedly merges sublists to produce new sorted sublists until there is only one sublist remaining. (Adapted for iterative step-by-step visualization).
 * **Tree Sort:** Builds a binary search tree (BST) from the elements to be sorted and then performs an in-order traversal on the tree to get the elements in sorted order. (Adapted for step-by-step visualization of BST construction and traversal).
-
-## Future Enhancements
-
-We are excited about the future of SortVisualizer and plan to introduce more features, including:
-
-* **Additional Sorting Algorithms:** Implementing a wider range of algorithms (e.g., Heap Sort, Shell Sort, Radix Sort).
-* **Pause and Step-Forward/Backward:** Finer control over the visualization process.
-* **Detailed Statistics:** Displaying metrics like comparisons, swaps, and time complexity for each sort.
-* **Custom Input:** Allowing users to input their own datasets.
-* **Enhanced Tree Visualization:** For Tree Sort, visually rendering the Binary Search Tree structure as it's built and traversed.
-* **Code Snippets:** Displaying relevant pseudo-code or code snippets for the current step of the algorithm.
-* **Themes:** Customizable UI themes.
-
----
-
-We hope SortVisualizer provides a valuable and engaging learning experience. Explore the fascinating world of sorting algorithms!
