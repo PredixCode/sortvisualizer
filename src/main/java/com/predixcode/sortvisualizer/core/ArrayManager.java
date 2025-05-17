@@ -15,7 +15,7 @@ import com.predixcode.sortvisualizer.ui.SortElement.ElementState;
 public class ArrayManager {
 
     private final SecureRandom random = new SecureRandom();
-    private List<SortElement> sortElements; // Changed from core.Element to ui.SortElement
+    private List<SortElement> sortElements;
     private int maxValueInCurrentArray;
 
     /**
@@ -57,11 +57,7 @@ public class ArrayManager {
             }
         }
         // If all values are 0 or negative, maxValueInCurrentArray might be 0 or less.
-        // For scaling, ensure it's at least 1 if there are elements.
         if (size > 0 && this.maxValueInCurrentArray <= 0) {
-            // If values can be negative and you want to scale based on magnitude,
-            // this logic might need adjustment. For typical positive bar charts,
-            // a max of 0 (if all are 0) should scale to a max of 1.
             boolean allNonPositive = true;
             for(SortElement el : this.sortElements) {
                 if (el.getValue() > 0) {
@@ -79,9 +75,6 @@ public class ArrayManager {
      * @return A new list of SortElement objects.
      */
     public List<SortElement> getSortElements() {
-        // Return a new list of new SortElement objects to ensure true immutability
-        // of the returned collection with respect to the internal state if needed.
-        // For now, a shallow copy of the list is often sufficient if SortElements themselves are handled carefully.
         return new ArrayList<>(this.sortElements);
     }
 
@@ -114,7 +107,6 @@ public class ArrayManager {
      */
     public void validateArray() {
         if (this.sortElements == null) {
-            // This state should ideally be prevented by the constructor and methods.
             throw new IllegalStateException("Internal SortElements list is null.");
         }
         // An empty list is valid. The algorithms should handle it.
@@ -124,7 +116,7 @@ public class ArrayManager {
     @Override
     public String toString() {
         return sortElements.stream()
-                           .map(SortElement::toString) // Assumes SortElement has a meaningful toString
+                           .map(SortElement::toString)
                            .collect(Collectors.joining(", ", "[", "]"));
     }
 
