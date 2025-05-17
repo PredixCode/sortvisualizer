@@ -14,11 +14,9 @@ public class TreeSort extends AbstractSortAlgorithm {
     private static class Node {
         SortElement elementData; // Store the SortElement itself
         Node left, right;
-        int originalIndex; // To map back to UI element if needed for tree visualization
 
-        Node(SortElement item, int originalIdx) {
+        Node(SortElement item) {
             elementData = item;
-            originalIndex = originalIdx;
             left = right = null;
         }
     }
@@ -86,24 +84,31 @@ public class TreeSort extends AbstractSortAlgorithm {
         }
 
         switch (currentState) {
-            case BUILDING_BST_PICK_ELEMENT:
+            case BUILDING_BST_PICK_ELEMENT -> {
                 return handleBuildingBstPickElement();
-            case BUILDING_BST_TRAVERSE_AND_INSERT:
+            }
+            case BUILDING_BST_TRAVERSE_AND_INSERT -> {
                 // This state would ideally be broken down further if visualizing BST traversal for insertion
                 return handleBuildingBstInsert(); // Simplified for now
-            case TRAVERSAL_PREP:
+            }
+            case TRAVERSAL_PREP -> {
                 bstCurrentTraversalNode = bstRoot;
                 currentState = TreeSortInternalState.TRAVERSAL_GO_LEFT;
                 return true;
-            case TRAVERSAL_GO_LEFT:
+            }
+            case TRAVERSAL_GO_LEFT -> {
                 return handleTraversalGoLeft();
-            case TRAVERSAL_VISIT_NODE:
+            }
+            case TRAVERSAL_VISIT_NODE -> {
                 return handleTraversalVisitNode();
-            case TRAVERSAL_GO_RIGHT:
+            }
+            case TRAVERSAL_GO_RIGHT -> {
                 return handleTraversalGoRight();
-            default:
+            }
+            default -> {
                 isSortedFlag = true;
                 return false;
+            }
         }
     }
 
@@ -154,9 +159,8 @@ public class TreeSort extends AbstractSortAlgorithm {
 
     private Node insertRec(Node rootNode, SortElement elementToInsert, int originalIdx) {
         if (rootNode == null) {
-            // Visually, this is where the new node is placed.
-            // The SortElement itself is now part of the tree structure.
-            return new Node(elementToInsert, originalIdx);
+
+            return new Node(elementToInsert);
         }
         // For visualization: callback.reportCompare(elementToInsert.originalIndex, rootNode.elementData.originalIndex);
         if (elementToInsert.getValue() < rootNode.elementData.getValue()) {

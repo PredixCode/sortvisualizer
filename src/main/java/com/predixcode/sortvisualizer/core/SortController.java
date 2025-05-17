@@ -1,7 +1,7 @@
 package com.predixcode.sortvisualizer.core;
 
 import java.util.ArrayList;
-import java.util.HashSet; // Ensure this is the dual channel version
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -32,9 +32,10 @@ public class SortController implements StepCallback {
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
     private int animationDelayMs = 100;
 
-    private static final int DEFAULT_ARRAY_SIZE = 50;
-    private static final int DEFAULT_MIN_VALUE = 1;
-    private static final int DEFAULT_MAX_VALUE = 200;
+    // Made these public static final for access from ControlPanel
+    public static final int DEFAULT_ARRAY_SIZE = 50;
+    public static final int DEFAULT_MIN_VALUE = 1;
+    public static final int DEFAULT_MAX_VALUE = 200;
 
     private Set<Integer> lastTransientStateIndices = new HashSet<>();
 
@@ -45,8 +46,7 @@ public class SortController implements StepCallback {
     private static final int TONE_DURATION_MS_PIVOT = 90;
     private static final int TONE_DURATION_MS_COMPLETION_NOTE = 120;
 
-
-    private ExecutorService utilitySoundExecutor;
+    private final ExecutorService utilitySoundExecutor;
 
     public SortController(SortPanel sortPanel) {
         this.sortPanel = sortPanel;
@@ -62,6 +62,27 @@ public class SortController implements StepCallback {
         });
         
         updateUiWithCurrentData("Initial Array Generation on Controller instantiation");
+    }
+
+    // --- Methods to control ToneGenerator frequencies ---
+    public void setMinToneFrequency(double freq) {
+        if (toneGenerator != null) {
+            toneGenerator.setMinFrequency(freq);
+        }
+    }
+
+    public void setMaxToneFrequency(double freq) {
+        if (toneGenerator != null) {
+            toneGenerator.setMaxFrequency(freq);
+        }
+    }
+    
+    public double getCurrentMinToneFrequency() {
+        return (toneGenerator != null) ? toneGenerator.getCurrentMinFrequencyHz() : 220.0; // Default fallback
+    }
+
+    public double getCurrentMaxToneFrequency() {
+         return (toneGenerator != null) ? toneGenerator.getCurrentMaxFrequencyHz() : 1046.0; // Default fallback
     }
 
     private void resetLastTransientStates() {
@@ -95,7 +116,6 @@ public class SortController implements StepCallback {
             activeSortElements.get(index2).setState(ElementState.COMPARE);
             lastTransientStateIndices.add(index1);
             lastTransientStateIndices.add(index2);
-            // No direct sortPanel.updateElements() here; rely on requestVisualUpdate from algorithm or controller loop
         });
     }
 
@@ -302,34 +322,25 @@ public class SortController implements StepCallback {
             sortThread = new Thread(() -> {
                 try {
                     boolean moreSteps = true;
-                    // Initial visual update before the first algorithm step
                     requestVisualUpdate(); 
-                    Thread.sleep(getAnimationDelayMs()); // Pause to see initial state
+                    Thread.sleep(getAnimationDelayMs());
 
                     while (moreSteps && isSortingActive.get() && !Thread.currentThread().isInterrupted()) {
                         if (isPaused.get()) {
-                            Thread.sleep(100); // Check pause state periodically
+                            Thread.sleep(100);
                             continue;
                         }
-
-                        moreSteps = currentAlgorithm.nextStep(); // Algorithm executes one logical visual step
-
-                        // Explicitly request a visual update after the algorithm's step.
-                        // The algorithm itself should also call this via callback if it wants
-                        // finer-grained updates within its own nextStep(), but this ensures
-                        // at least one update per controller-level step.
+                        moreSteps = currentAlgorithm.nextStep();
                         requestVisualUpdate(); 
-
-                        if (moreSteps && isSortingActive.get()) { // Only sleep if algo has more steps and not stopped
+                        if (moreSteps && isSortingActive.get()) {
                             Thread.sleep(getAnimationDelayMs());
                         }
                     }
                 } catch (InterruptedException e) {
                     System.out.println("Sort thread interrupted.");
-                    Thread.currentThread().interrupt(); // Preserve interrupt status
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     System.err.println("Error during sorting steps: " + e.getMessage());
-                    e.printStackTrace();
                     Platform.runLater(() -> App.showAlert("Sorting Error", "An error occurred during sorting: " + e.getMessage()));
                 } finally {
                     boolean wasAlgorithmStillMarkedAsSorting = isSortingActive.getAndSet(false);
@@ -366,15 +377,15 @@ public class SortController implements StepCallback {
     
     public void stopSort() {
         System.out.println("SortController: Attempting to stop sort...");
-        if (isSortingActive.getAndSet(false)) { // Atomically set to false and get previous value
+        if (isSortingActive.getAndSet(false)) {
             if (sortThread != null && sortThread.isAlive()) {
-                sortThread.interrupt(); // Interrupt the sleep in the sorting loop
+                sortThread.interrupt();
             }
             System.out.println("SortController: Stop signal sent to sorting thread.");
         } else {
             System.out.println("SortController: Sort was not active or already stopping.");
             if (controlPanel != null) {
-                 Platform.runLater(controlPanel::enableControls); // Ensure controls are enabled
+                 Platform.runLater(controlPanel::enableControls);
             }
         }
     }

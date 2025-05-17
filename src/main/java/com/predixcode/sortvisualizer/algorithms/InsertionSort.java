@@ -68,15 +68,19 @@ public class InsertionSort extends AbstractSortAlgorithm {
         }
 
         switch (currentState) {
-            case SELECTING_KEY:
+            case SELECTING_KEY -> {
                 return handleSelectingKey();
-            case SHIFTING_ELEMENTS:
+            }
+            case SHIFTING_ELEMENTS -> {
                 return handleShiftingElements();
-            case INSERTING_KEY:
+            }
+            case INSERTING_KEY -> {
                 return handleInsertingKey();
-            default:
+            }
+            default -> {
                 isSortedFlag = true;
                 return false;
+            }
         }
     }
 

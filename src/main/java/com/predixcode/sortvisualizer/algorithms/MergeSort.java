@@ -94,30 +94,35 @@ public class MergeSort extends AbstractSortAlgorithm {
         }
 
         switch (currentState) {
-            case IDLE:
+            case IDLE -> {
                 if (!taskStack.isEmpty()) currentState = MergeSortInternalState.SPLITTING;
                 else { isSortedFlag = true; return false;} // Should be caught by stack empty in SPLITTING
                 return true;
+            }
 
-            case SPLITTING:
+            case SPLITTING -> {
                 return handleSplitting();
+            }
 
-            case PREPARING_MERGE:
+            case PREPARING_MERGE -> {
                 return handlePreparingMerge();
+            }
 
-            case MERGING_COMPARE:
+            case MERGING_COMPARE -> {
                 return handleMergingCompare();
+            }
 
-            case MERGING_COPY_LEFT:
-            case MERGING_COPY_RIGHT:
+            case MERGING_COPY_LEFT, MERGING_COPY_RIGHT -> {
                 return handleMergingCopyRemaining();
-
-            case COPYING_BACK:
+            }
+            case COPYING_BACK -> {
                 return handleCopyingBack();
+            }
 
-            default:
+            default -> {
                 isSortedFlag = true;
                 return false;
+            }
         }
     }
 

@@ -80,15 +80,19 @@ public class QuickSort extends AbstractSortAlgorithm {
         }
 
         switch (currentState) {
-            case SELECTING_SUB_ARRAY:
+            case SELECTING_SUB_ARRAY -> {
                 return handleSelectSubArray();
-            case PARTITIONING:
+            }
+            case PARTITIONING -> {
                 return handlePartitioningStep();
-            case PUSHING_SUB_ARRAYS:
+            }
+            case PUSHING_SUB_ARRAYS -> {
                 return handlePushingSubArrays();
-            default:
+            }
+            default -> {
                 isSortedFlag = true;
                 return false;
+            }
         }
     }
 

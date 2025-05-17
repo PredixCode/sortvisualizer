@@ -14,9 +14,9 @@ import javafx.scene.layout.Pane;
  */
 public class SortPanel extends Pane {
 
-    private Canvas canvas;
-    private GraphicsContext gc;
-    private List<SortElement> elements;
+    private final Canvas canvas;
+    private final GraphicsContext gc;
+    private final List<SortElement> elements;
     private int maxValueForScaling = 100; // Default max value, updated by SortController
 
     private static final double BAR_GAP_PERCENTAGE = 0.1; // 10% gap between bars
