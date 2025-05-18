@@ -265,7 +265,7 @@ public class ControlPanel extends VBox {
         // Linear Frequency Controls (Min/Max Freq Sliders)
         Label minFreqLabel = new Label("Min Frequency (Hz):");
         styleLabel(minFreqLabel);
-        minFrequencySlider = new Slider(20, 10000, 150); 
+        minFrequencySlider = new Slider(20, 2000, 150);
         styleSlider(minFrequencySlider);
         minFrequencySlider.setPrefWidth(180);
         minFreqValueLabel = new Label(String.format("%.0f Hz", minFrequencySlider.getValue()));
@@ -282,7 +282,7 @@ public class ControlPanel extends VBox {
 
         Label maxFreqLabel = new Label("Max Frequency (Hz):");
         styleLabel(maxFreqLabel);
-        maxFrequencySlider = new Slider(200, 20000, 2000);
+        maxFrequencySlider = new Slider(200, 5000, 2000);
         styleSlider(maxFrequencySlider);
         maxFrequencySlider.setPrefWidth(180);
         maxFreqValueLabel = new Label(String.format("%.0f Hz", maxFrequencySlider.getValue()));
