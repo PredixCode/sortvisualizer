@@ -109,7 +109,7 @@ The SortVisualizer currently features the following algorithms, each adapted for
 
 ## Future Enhancements
 
-* More sorting algorithms (e.g., Heap Sort, Shell Sort, Radix Sort).
+* More sorting algorithms (e.g., Radix Sort).
 * Detailed statistics (comparisons, swaps, time complexity).
 * Custom user-input datasets.
 * Visual rendering of the Binary Search Tree for Tree Sort.

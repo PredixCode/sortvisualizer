@@ -11,7 +11,10 @@ import com.predixcode.sortvisualizer.algorithms.QuickSort;
 import com.predixcode.sortvisualizer.algorithms.ShellSort;
 import com.predixcode.sortvisualizer.algorithms.TreeSort;
 import com.predixcode.sortvisualizer.core.SortController;
+import com.predixcode.sortvisualizer.sound.MusicalNote; // Import new enum
+import com.predixcode.sortvisualizer.sound.ScaleType;   // Import new enum
 
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -23,7 +26,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 
 public class ControlPanel extends VBox {
 
@@ -38,10 +45,22 @@ public class ControlPanel extends VBox {
     private TextField arraySizeField;
     private Label speedValueLabel;
     private CheckBox soundEnabledCheckbox;
+    
+    // Frequency sliders (for linear mode)
     private Slider minFrequencySlider;
     private Slider maxFrequencySlider;
     private Label minFreqValueLabel;
     private Label maxFreqValueLabel;
+    private HBox linearFrequencyControlsBox; // To toggle visibility
+
+    // New UI elements for musical scale and tone
+    private ComboBox<ScaleType> scaleTypeComboBox;
+    private ComboBox<MusicalNote> baseNoteComboBox;
+    private ComboBox<Integer> baseOctaveComboBox;
+    private Label scaleTypeLabel;
+    private Label baseNoteLabel;
+    private Label baseOctaveLabel;
+
 
     private boolean isPausedForButtonState = false;
 
@@ -196,12 +215,57 @@ public class ControlPanel extends VBox {
         soundEnabledCheckbox.setSelected(true); 
         soundEnabledCheckbox.setOnAction(e -> {
             if (sortController != null) sortController.setSoundEnabled(soundEnabledCheckbox.isSelected());
+            updateSoundControlStates(soundEnabledCheckbox.isSelected(), scaleTypeComboBox.getValue());
         });
-        soundControlsGrid.add(soundEnabledCheckbox, 0, 0, 3, 1);
+        soundControlsGrid.add(soundEnabledCheckbox, 0, 0, 3, 1); // Span 3 columns
 
-        Label minFreqLabel = new Label("Min Freq (Hz):");
+        // Scale Type
+        scaleTypeLabel = new Label("Scale Type:");
+        styleLabel(scaleTypeLabel);
+        scaleTypeComboBox = new ComboBox<>(FXCollections.observableArrayList(ScaleType.values()));
+        styleComboBoxGeneric(scaleTypeComboBox);
+        scaleTypeComboBox.setMinWidth(150);
+        scaleTypeComboBox.setOnAction(e -> {
+            if (sortController != null) {
+                ScaleType selectedType = scaleTypeComboBox.getValue();
+                sortController.setMusicalScaleType(selectedType);
+                updateSoundControlStates(soundEnabledCheckbox.isSelected(), selectedType);
+            }
+        });
+        soundControlsGrid.add(scaleTypeLabel, 0, 1);
+        soundControlsGrid.add(scaleTypeComboBox, 1, 1, 2, 1); // Span 2 columns for combobox
+
+        // Base Note
+        baseNoteLabel = new Label("Base Note:");
+        styleLabel(baseNoteLabel);
+        baseNoteComboBox = new ComboBox<>(FXCollections.observableArrayList(MusicalNote.values()));
+        styleComboBoxGeneric(baseNoteComboBox);
+        baseNoteComboBox.setMinWidth(150);
+        baseNoteComboBox.setOnAction(e -> {
+            if (sortController != null) sortController.setMusicalBaseNote(baseNoteComboBox.getValue());
+        });
+        soundControlsGrid.add(baseNoteLabel, 0, 2);
+        soundControlsGrid.add(baseNoteComboBox, 1, 2, 2, 1);
+
+        // Base Octave
+        baseOctaveLabel = new Label("Base Octave:");
+        styleLabel(baseOctaveLabel);
+        List<Integer> octaves = IntStream.rangeClosed(0, 8).boxed().collect(Collectors.toList());
+        baseOctaveComboBox = new ComboBox<>(FXCollections.observableArrayList(octaves));
+        styleComboBoxGeneric(baseOctaveComboBox);
+        baseOctaveComboBox.setMinWidth(150);
+        baseOctaveComboBox.setOnAction(e -> {
+            if (sortController != null && baseOctaveComboBox.getValue() != null) {
+                sortController.setMusicalBaseOctave(baseOctaveComboBox.getValue());
+            }
+        });
+        soundControlsGrid.add(baseOctaveLabel, 0, 3);
+        soundControlsGrid.add(baseOctaveComboBox, 1, 3, 2, 1);
+
+        // Linear Frequency Controls (Min/Max Freq Sliders)
+        Label minFreqLabel = new Label("Min Frequency (Hz):");
         styleLabel(minFreqLabel);
-        minFrequencySlider = new Slider(50, 800, 220); 
+        minFrequencySlider = new Slider(20, 10000, 150); 
         styleSlider(minFrequencySlider);
         minFrequencySlider.setPrefWidth(180);
         minFreqValueLabel = new Label(String.format("%.0f Hz", minFrequencySlider.getValue()));
@@ -211,16 +275,14 @@ public class ControlPanel extends VBox {
             minFreqValueLabel.setText(String.format("%.0f Hz", newMinFreq));
             if (sortController != null) sortController.setMinToneFrequency(newMinFreq);
             if (newMinFreq >= maxFrequencySlider.getValue()) {
-                maxFrequencySlider.setValue(newMinFreq + 50);
+                maxFrequencySlider.setValue(newMinFreq + 50); // Ensure min < max
             }
         });
-        soundControlsGrid.add(minFreqLabel, 0, 1);
-        soundControlsGrid.add(minFrequencySlider, 1, 1);
-        soundControlsGrid.add(minFreqValueLabel, 2, 1);
+        
 
-        Label maxFreqLabel = new Label("Max Freq (Hz):");
+        Label maxFreqLabel = new Label("Max Frequency (Hz):");
         styleLabel(maxFreqLabel);
-        maxFrequencySlider = new Slider(200, 2000, 1046);
+        maxFrequencySlider = new Slider(200, 20000, 2000);
         styleSlider(maxFrequencySlider);
         maxFrequencySlider.setPrefWidth(180);
         maxFreqValueLabel = new Label(String.format("%.0f Hz", maxFrequencySlider.getValue()));
@@ -230,16 +292,65 @@ public class ControlPanel extends VBox {
             maxFreqValueLabel.setText(String.format("%.0f Hz", newMaxFreq));
             if (sortController != null) sortController.setMaxToneFrequency(newMaxFreq);
             if (newMaxFreq <= minFrequencySlider.getValue()) {
-                 minFrequencySlider.setValue(newMaxFreq - 50);
+                 minFrequencySlider.setValue(Math.max(50, newMaxFreq - 50)); // Ensure max > min
             }
         });
-        soundControlsGrid.add(maxFreqLabel, 0, 2);
-        soundControlsGrid.add(maxFrequencySlider, 1, 2);
-        soundControlsGrid.add(maxFreqValueLabel, 2, 2);
         
-        soundPane.setContent(soundControlsGrid);
+        // Group linear frequency controls for easier show/hide
+        GridPane linearFreqGrid = new GridPane();
+        linearFreqGrid.setHgap(10);
+        linearFreqGrid.setVgap(10);
+        linearFreqGrid.add(minFreqLabel, 0, 0);
+        linearFreqGrid.add(minFrequencySlider, 1, 0);
+        linearFreqGrid.add(minFreqValueLabel, 2, 0);
+        linearFreqGrid.add(maxFreqLabel, 0, 1);
+        linearFreqGrid.add(maxFrequencySlider, 1, 1);
+        linearFreqGrid.add(maxFreqValueLabel, 2, 1);
+        
+        soundControlsGrid.add(linearFreqGrid, 0, 4, 3, 1); // Add to main sound grid, span 3 columns
 
+        soundPane.setContent(soundControlsGrid);
         this.getChildren().addAll(algorithmPane, arrayPane, soundPane);
+
+        // Initial state update for sound controls
+        if (sortController != null) { // Should be called after sortController is set
+             updateSoundControlStates(soundEnabledCheckbox.isSelected(), sortController.getCurrentScaleType());
+        } else {
+             updateSoundControlStates(soundEnabledCheckbox.isSelected(), ScaleType.MAJOR); // Default if no controller yet
+        }
+    }
+
+    private void updateSoundControlStates(boolean soundEnabled, ScaleType currentScaleType) {
+        boolean isLinear = soundEnabled && (currentScaleType == ScaleType.LINEAR_FREQUENCY);
+        boolean isScaled = soundEnabled && (currentScaleType != ScaleType.LINEAR_FREQUENCY);
+
+        // Enable/disable scale and tone controls
+        scaleTypeComboBox.setDisable(!soundEnabled);
+        baseNoteComboBox.setDisable(!isScaled);
+        baseOctaveComboBox.setDisable(!isScaled);
+        scaleTypeLabel.setDisable(!soundEnabled);
+        baseNoteLabel.setDisable(!isScaled);
+        baseOctaveLabel.setDisable(!isScaled);
+
+        // Enable/disable linear frequency sliders
+        minFrequencySlider.setDisable(!isLinear);
+        maxFrequencySlider.setDisable(!isLinear);
+        minFreqValueLabel.setDisable(!isLinear); // Assuming labels should also be disabled
+        maxFreqValueLabel.setDisable(!isLinear);
+        // The parent labels "Min Freq" and "Max Freq" can also be disabled if needed
+        // For simplicity, their direct parent GridPane (linearFreqGrid) can be disabled.
+        if (linearFrequencyControlsBox != null) { // If linearFrequencyControlsBox is used
+            linearFrequencyControlsBox.setDisable(!isLinear);
+        } else { // If individual components are in a grid
+            // Accessing labels inside linearFreqGrid to disable them
+            // This requires linearFreqGrid's children to be accessible or labels to be fields
+        }
+        
+        // If sound is disabled, all sub-controls should be disabled
+        if (!soundEnabled) {
+            minFrequencySlider.setDisable(true);
+            maxFrequencySlider.setDisable(true);
+        }
     }
     
     private void styleLabel(Label label) {
@@ -255,8 +366,9 @@ public class ControlPanel extends VBox {
             "-fx-focus-color: " + Theme.toHex(Theme.ACCENT_COLOR) + ";"
         );
     }
-
-    private void styleComboBox(ComboBox<AlgorithmItem> comboBox) {
+    
+    // Generic styling for ComboBoxes (used for ScaleType, MusicalNote, Integer)
+    private <T> void styleComboBoxGeneric(ComboBox<T> comboBox) {
         String textFillLight = Theme.toHex(Theme.TEXT_COLOR_LIGHT);
         String panelBgBrighter = Theme.toHex(Theme.PANEL_BACKGROUND_COLOR.brighter());
         String panelBg = Theme.toHex(Theme.PANEL_BACKGROUND_COLOR);
@@ -270,7 +382,7 @@ public class ControlPanel extends VBox {
 
         comboBox.setStyle(baseStyle +
                           "-fx-background-color: " + panelBgBrighter + "; " +
-                          "-fx-text-fill: " + textFillLight + "; " +
+                          "-fx-text-fill: " + textFillLight + "; " + // For selected item text
                           "-fx-border-color: " + borderNormalColor + ";");
         
         comboBox.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
@@ -289,15 +401,15 @@ public class ControlPanel extends VBox {
         });
 
         comboBox.setCellFactory(lv -> {
-            ListCell<AlgorithmItem> cell = new ListCell<AlgorithmItem>() {
+            ListCell<T> cell = new ListCell<T>() {
                 @Override
-                protected void updateItem(AlgorithmItem item, boolean empty) {
+                protected void updateItem(T item, boolean empty) {
                     super.updateItem(item, empty);
                     if (empty || item == null) {
                         setText(null);
                         setStyle("-fx-background-color: " + panelBg + "; -fx-text-fill: " + textFillLight + ";");
                     } else {
-                        setText(item.toString());
+                        setText(item.toString()); // Assumes T has a meaningful toString()
                         setTextFill(Theme.TEXT_COLOR_LIGHT);
                         setStyle("-fx-background-color: " + panelBg + "; -fx-padding: 5px 8px;");
                     }
@@ -313,9 +425,9 @@ public class ControlPanel extends VBox {
             return cell;
         });
         
-        comboBox.setButtonCell(new ListCell<AlgorithmItem>() {
+        comboBox.setButtonCell(new ListCell<T>() {
             @Override
-            protected void updateItem(AlgorithmItem item, boolean empty) {
+            protected void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(comboBox.getPromptText() != null ? comboBox.getPromptText() : "");
@@ -327,6 +439,11 @@ public class ControlPanel extends VBox {
                 setPadding(new Insets(3,5,3,5));
             }
         });
+    }
+
+
+    private void styleComboBox(ComboBox<AlgorithmItem> comboBox) { // Keep specific for AlgorithmItem if needed, or merge
+        styleComboBoxGeneric(comboBox); // Use the generic styler
     }
     
     private void styleTextField(TextField textField) {
@@ -357,7 +474,7 @@ public class ControlPanel extends VBox {
     private void styleSlider(Slider slider) {
         slider.setStyle(
             "-fx-tick-label-fill: " + Theme.toHex(Theme.TEXT_COLOR_LIGHT) + "; " +
-            "-fx-base: " + Theme.toHex(Theme.PRIMARY_COLOR) + ";" // Hint for thumb color
+            "-fx-base: " + Theme.toHex(Theme.PRIMARY_COLOR) + ";" 
         );
     }
 
@@ -365,26 +482,15 @@ public class ControlPanel extends VBox {
         TitledPane titledPane = new TitledPane();
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        // CHANGE: Title text color to light grey
         titleLabel.setTextFill(Theme.TEXT_COLOR_LIGHT); 
         titledPane.setGraphic(titleLabel); 
         titledPane.setCollapsible(true);
         titledPane.setExpanded(true);
-
-        // Style the TitledPane header.
-        // -fx-control-inner-background is often used for the header background in Modena.
-        // Alternatively, -fx-base can influence it.
-        // -fx-text-fill for general text in header (if not using graphic).
-        // -fx-mark-color for the arrow.
         titledPane.setStyle(
-            // "-fx-control-inner-background: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR.darker()) + "; " + // More specific for header
-            "-fx-base: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR.darker()) + "; " + // General base color for header
-            "-fx-text-fill: " + Theme.toHex(Theme.TEXT_COLOR_LIGHT) + "; " + // General text fill for header
-            "-fx-mark-color: " + Theme.toHex(Theme.TEXT_COLOR_LIGHT) + ";"  // Arrow color to light grey
-            // "-fx-border-color: " + Theme.toHex(Theme.BACKGROUND_COLOR) + "; " + 
-            // "-fx-border-width: 0 0 1px 0;" // Bottom border for separation
+            "-fx-base: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR.darker()) + "; " + 
+            "-fx-text-fill: " + Theme.toHex(Theme.TEXT_COLOR_LIGHT) + "; " + 
+            "-fx-mark-color: " + Theme.toHex(Theme.TEXT_COLOR_LIGHT) + ";"
         );
-        // The content area (VBox/GridPane) inside the TitledPane is styled separately.
         return titledPane;
     }
 
@@ -419,12 +525,26 @@ public class ControlPanel extends VBox {
                     this.sortController.setAlgorithm(algorithmComboBox.getSelectionModel().getSelectedItem().getAlgorithm());
                  }
             }
-            minFrequencySlider.setValue(this.sortController.getCurrentMinToneFrequency());
-            maxFrequencySlider.setValue(this.sortController.getCurrentMaxToneFrequency());
+            // Initialize sound settings from controller
             soundEnabledCheckbox.setSelected(this.sortController.isSoundEnabled());
             
+            // Initialize musical scale controls
+            scaleTypeComboBox.setValue(this.sortController.getCurrentScaleType());
+            baseNoteComboBox.setValue(this.sortController.getCurrentBaseNote());
+            baseOctaveComboBox.setValue(this.sortController.getCurrentBaseOctave());
+
+            // Initialize linear frequency sliders
+            minFrequencySlider.setValue(this.sortController.getCurrentMinToneFrequency());
+            maxFrequencySlider.setValue(this.sortController.getCurrentMaxToneFrequency());
+            
+            // Pass initial values to controller (or ensure controller already has them)
+            this.sortController.setMusicalScaleType(scaleTypeComboBox.getValue());
+            this.sortController.setMusicalBaseNote(baseNoteComboBox.getValue());
+            this.sortController.setMusicalBaseOctave(baseOctaveComboBox.getValue());
             this.sortController.setMinToneFrequency(minFrequencySlider.getValue());
             this.sortController.setMaxToneFrequency(maxFrequencySlider.getValue());
+
+            updateSoundControlStates(soundEnabledCheckbox.isSelected(), scaleTypeComboBox.getValue());
         }
     }
 
@@ -435,9 +555,18 @@ public class ControlPanel extends VBox {
         startButton.setDisable(true);
         pauseResumeButton.setDisable(false);
         stopButton.setDisable(false);
+        
+        // Disable all sound configuration during sort
+        soundEnabledCheckbox.setDisable(true);
+        scaleTypeComboBox.setDisable(true);
+        baseNoteComboBox.setDisable(true);
+        baseOctaveComboBox.setDisable(true);
         minFrequencySlider.setDisable(true);
         maxFrequencySlider.setDisable(true);
-        soundEnabledCheckbox.setDisable(true);
+        // Also disable labels if desired
+        scaleTypeLabel.setDisable(true);
+        baseNoteLabel.setDisable(true);
+        baseOctaveLabel.setDisable(true);
     }
 
     public void enableControls() {
@@ -450,51 +579,35 @@ public class ControlPanel extends VBox {
         isPausedForButtonState = false;
         stopButton.setDisable(true);
         speedSlider.setDisable(false);
-        minFrequencySlider.setDisable(false);
-        maxFrequencySlider.setDisable(false);
+        
+        // Enable sound configuration according to current state
         soundEnabledCheckbox.setDisable(false);
+        updateSoundControlStates(soundEnabledCheckbox.isSelected(), scaleTypeComboBox.getValue());
+        // Re-enable labels
+        scaleTypeLabel.setDisable(!soundEnabledCheckbox.isSelected());
+        // Further refinement in updateSoundControlStates for baseNote/Octave labels
     }
     
-    /**
-     * Gets the session manager tab.
-     * This method was missing and is now added to fix the reference in App.java.
-     * @return The session manager tab.
-     */
     public Tab getSessionManagerTab() {
-        // Create a new tab for session management
         Tab sessionTab = new Tab("Session Manager");
         sessionTab.setClosable(false);
-        
-        // Create content for the tab
         VBox content = new VBox(10);
         content.setPadding(new Insets(15));
         content.setStyle("-fx-background-color: " + Theme.toHex(Theme.PANEL_BACKGROUND_COLOR) + ";");
-        
         Label titleLabel = new Label("Session Management");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         titleLabel.setTextFill(Theme.TEXT_COLOR_LIGHT);
-        
-        // Add some placeholder content
         Button saveSessionButton = createStyledButton("Save Current Session", Theme.PRIMARY_COLOR);
         Button loadSessionButton = createStyledButton("Load Session", Theme.SECONDARY_COLOR);
-        
         content.getChildren().addAll(titleLabel, saveSessionButton, loadSessionButton);
         sessionTab.setContent(content);
-        
         return sessionTab;
     }
     
-    /**
-     * Selects an algorithm in the combo box by its name.
-     * This method is called by SortController to set the algorithm by name.
-     * 
-     * @param name The name of the algorithm to select
-     */
     public void selectAlgorithmByName(String name) {
         if (name == null || name.isEmpty() || algorithmComboBox == null) {
             return;
         }
-        
         for (AlgorithmItem item : algorithmComboBox.getItems()) {
             if (item.getAlgorithm().getName().equals(name)) {
                 algorithmComboBox.getSelectionModel().select(item);
@@ -510,6 +623,7 @@ public class ControlPanel extends VBox {
         private final Algorithm algorithm;
         public AlgorithmItem(Algorithm algorithm) { this.algorithm = algorithm; }
         public Algorithm getAlgorithm() { return algorithm; }
-        @Override public String toString() { return algorithm.getName(); }
+        @Override
+        public String toString() { return algorithm.getName(); }
     }
 }
